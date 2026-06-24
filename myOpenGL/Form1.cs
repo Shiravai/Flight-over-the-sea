@@ -104,6 +104,10 @@ namespace myOpenGL
             cGL.showTextures = checkBoxTex.Checked;
             cGL.showAxes = checkBoxAxes.Checked;
             cGL.showSun = checkBoxSun.Checked;
+            cGL.dayNight = checkBoxDayNight.Checked;
+            cGL.showBeam = checkBoxBeam.Checked;
+            cGL.showBoat = checkBoxBoat.Checked;
+            cGL.showBirds = checkBoxBirds.Checked;
             cGL.Draw();
         }
 

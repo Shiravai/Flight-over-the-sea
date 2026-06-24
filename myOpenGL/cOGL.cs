@@ -8,6 +8,8 @@ namespace OpenGL
     // Final project - a small propeller plane flying over the sea.
     // The propeller keeps spinning while the plane circles around the island,
     // the plane is reflected in the water and drops a shadow on it.
+    // A day/night cycle, a turning lighthouse beam, a sailing boat and a flock
+    // of birds bring the scene to life.
     class cOGL
     {
         Control p;
@@ -32,6 +34,7 @@ namespace OpenGL
             obj = GLU.gluNewQuadric();
             GLU.gluQuadricNormals(obj, GLU.GLU_SMOOTH);
             GenerateTextures();
+            MakeStars();
         }
 
         ~cOGL()
@@ -63,6 +66,12 @@ namespace OpenGL
         public bool showSun = true;
         public bool animate = true;
 
+        // extra scene features (the "upgrade")
+        public bool dayNight = true;   // moving sun, changing sky, stars
+        public bool showBeam = true;   // turning lighthouse beam
+        public bool showBoat = true;   // sailing boat on the water
+        public bool showBirds = true;  // flock crossing the sky
+
         public bool isPerspective = true;
         public float fovy = 45.0f;       // perspective zoom
         public float orthoScale = 7.0f;  // ortho zoom
@@ -71,7 +80,38 @@ namespace OpenGL
         float propAngle = 0.0f;          // propeller rotation
         float flightAngle = 30.0f;       // position along the circle
 
+        float sunAngle = 60.0f;          // position along the day arc (degrees)
+        float beamAngle = 0.0f;          // lighthouse beam rotation
+        float boatPhase = 0.0f;          // boat rocking
+        float birdCross = -13.0f;        // birds crossing the sky
+        float wingFlap = 0.0f;
+        float waterScroll = 0.0f;        // moving water texture
+        float daylight = 1.0f;           // 0 = night .. 1 = noon
+
+        float skyR = 0.53f, skyG = 0.70f, skyB = 0.92f;
+
         public float[] pos = new float[4];
+
+        // a fixed dome of stars
+        const int STAR_COUNT = 120;
+        float[] starX = new float[STAR_COUNT];
+        float[] starY = new float[STAR_COUNT];
+        float[] starZ = new float[STAR_COUNT];
+
+        static float Lerp(float a, float b, float t) { return a + (b - a) * t; }
+
+        void MakeStars()
+        {
+            Random r = new Random(7);
+            for (int i = 0; i < STAR_COUNT; i++)
+            {
+                double ang = r.NextDouble() * 2 * Math.PI;
+                double rad = 16 + r.NextDouble() * 14;
+                starX[i] = (float)(Math.Cos(ang) * rad);
+                starY[i] = (float)(Math.Sin(ang) * rad);
+                starZ[i] = (float)(4 + r.NextDouble() * 24);
+            }
+        }
 
         //--------------------------------------------------------------------
         //  textures
@@ -209,37 +249,36 @@ namespace OpenGL
             float z0 = cz - hz, z1 = cz + hz;
 
             GL.glBegin(GL.GL_QUADS);
-            // top
             GL.glNormal3f(0, 0, 1);
             GL.glTexCoord2f(0, 0); GL.glVertex3f(x0, y0, z1);
             GL.glTexCoord2f(1, 0); GL.glVertex3f(x1, y0, z1);
             GL.glTexCoord2f(1, 1); GL.glVertex3f(x1, y1, z1);
             GL.glTexCoord2f(0, 1); GL.glVertex3f(x0, y1, z1);
-            // bottom
+
             GL.glNormal3f(0, 0, -1);
             GL.glTexCoord2f(0, 0); GL.glVertex3f(x0, y1, z0);
             GL.glTexCoord2f(1, 0); GL.glVertex3f(x1, y1, z0);
             GL.glTexCoord2f(1, 1); GL.glVertex3f(x1, y0, z0);
             GL.glTexCoord2f(0, 1); GL.glVertex3f(x0, y0, z0);
-            // front
+
             GL.glNormal3f(1, 0, 0);
             GL.glTexCoord2f(0, 0); GL.glVertex3f(x1, y0, z0);
             GL.glTexCoord2f(1, 0); GL.glVertex3f(x1, y1, z0);
             GL.glTexCoord2f(1, 1); GL.glVertex3f(x1, y1, z1);
             GL.glTexCoord2f(0, 1); GL.glVertex3f(x1, y0, z1);
-            // back
+
             GL.glNormal3f(-1, 0, 0);
             GL.glTexCoord2f(0, 0); GL.glVertex3f(x0, y1, z0);
             GL.glTexCoord2f(1, 0); GL.glVertex3f(x0, y0, z0);
             GL.glTexCoord2f(1, 1); GL.glVertex3f(x0, y0, z1);
             GL.glTexCoord2f(0, 1); GL.glVertex3f(x0, y1, z1);
-            // right
+
             GL.glNormal3f(0, 1, 0);
             GL.glTexCoord2f(0, 0); GL.glVertex3f(x1, y1, z0);
             GL.glTexCoord2f(1, 0); GL.glVertex3f(x0, y1, z0);
             GL.glTexCoord2f(1, 1); GL.glVertex3f(x0, y1, z1);
             GL.glTexCoord2f(0, 1); GL.glVertex3f(x1, y1, z1);
-            // left
+
             GL.glNormal3f(0, -1, 0);
             GL.glTexCoord2f(0, 0); GL.glVertex3f(x0, y0, z0);
             GL.glTexCoord2f(1, 0); GL.glVertex3f(x1, y0, z0);
@@ -250,7 +289,6 @@ namespace OpenGL
 
         //--------------------------------------------------------------------
         //  the airplane (hierarchical model). nose looks towards +X.
-        //  asShadow = draw it flat & dark for the shadow pass.
         //--------------------------------------------------------------------
         void DrawPlane(bool asShadow)
         {
@@ -298,13 +336,11 @@ namespace OpenGL
             GL.glPushMatrix();
             GL.glTranslatef(1.07f, 0, 0);
             GL.glRotatef(propAngle, 1, 0, 0);
-            // hub
             if (!asShadow) GL.glColor3f(0.15f, 0.15f, 0.15f);
             GL.glPushMatrix();
             GL.glRotatef(90, 0, 1, 0);
             GLU.gluCylinder(obj, 0.06, 0.06, 0.13, 12, 2);
             GL.glPopMatrix();
-            // three blades
             for (int i = 0; i < 3; i++)
             {
                 GL.glPushMatrix();
@@ -334,6 +370,63 @@ namespace OpenGL
         }
 
         //--------------------------------------------------------------------
+        //  the sailing boat (second hierarchical model, rocks with the waves)
+        //--------------------------------------------------------------------
+        void DrawBoat(bool asShadow)
+        {
+            // hull
+            if (!asShadow) { GL.glEnable(GL.GL_LIGHTING); GL.glColor3f(0.45f, 0.27f, 0.13f); }
+            DrawBox(0.0f, 0.0f, 0.10f, 0.7f, 0.28f, 0.12f);
+
+            // cabin
+            if (!asShadow) GL.glColor3f(0.85f, 0.85f, 0.88f);
+            DrawBox(-0.25f, 0.0f, 0.26f, 0.22f, 0.20f, 0.10f);
+
+            // mast
+            if (!asShadow) GL.glColor3f(0.35f, 0.22f, 0.12f);
+            GL.glPushMatrix();
+            GL.glTranslatef(0.15f, 0, 0.20f);
+            GL.glRotatef(0, 0, 1, 0);
+            GLU.gluCylinder(obj, 0.035, 0.02, 0.95, 8, 2);
+            GL.glPopMatrix();
+
+            // triangular sail
+            if (!asShadow) GL.glColor3f(0.96f, 0.96f, 0.96f);
+            GL.glBegin(GL.GL_TRIANGLES);
+            GL.glNormal3f(0, 1, 0);
+            GL.glVertex3f(0.17f, 0.0f, 0.24f);
+            GL.glVertex3f(0.17f, 0.0f, 1.05f);
+            GL.glVertex3f(0.62f, 0.0f, 0.30f);
+            GL.glNormal3f(0, -1, 0);
+            GL.glVertex3f(0.17f, 0.0f, 0.24f);
+            GL.glVertex3f(0.62f, 0.0f, 0.30f);
+            GL.glVertex3f(0.17f, 0.0f, 1.05f);
+            GL.glEnd();
+        }
+
+        void DrawBoatInScene(bool asShadow)
+        {
+            float bob = 0.06f * (float)Math.Sin(boatPhase);
+            float roll = 4.5f * (float)Math.Sin(boatPhase * 0.8f);
+            float drift = 1.4f * (float)Math.Sin(boatPhase * 0.25f);
+
+            GL.glPushMatrix();
+            GL.glTranslatef(-5.5f, 3.5f + drift, bob);
+            GL.glRotatef(35.0f, 0, 0, 1);   // heading
+            GL.glRotatef(roll, 1, 0, 0);    // rocking on the waves
+            GL.glScalef(0.85f, 0.85f, 0.85f);
+            DrawBoat(asShadow);
+            GL.glPopMatrix();
+        }
+
+        // everything that moves and should be reflected / shadowed
+        void DrawMovers(bool asShadow)
+        {
+            DrawAirplaneInScene(asShadow);
+            if (showBoat) DrawBoatInScene(asShadow);
+        }
+
+        //--------------------------------------------------------------------
         //  the static world
         //--------------------------------------------------------------------
         void DrawSea(bool translucent)
@@ -348,6 +441,17 @@ namespace OpenGL
                 GL.glColor4f(0.55f, 0.72f, 0.92f, 1.0f);
 
             EnableTexture(texWater);
+            bool scroll = showTextures && texturesLoaded;
+            if (scroll)
+            {
+                // slide the texture so the sea looks alive (texture matrix)
+                GL.glMatrixMode(GL.GL_TEXTURE);
+                GL.glPushMatrix();
+                GL.glLoadIdentity();
+                GL.glTranslatef(waterScroll, waterScroll * 0.4f, 0);
+                GL.glMatrixMode(GL.GL_MODELVIEW);
+            }
+
             GL.glNormal3f(0, 0, 1);
             float s = 13.0f, t = 6.0f;
             GL.glBegin(GL.GL_QUADS);
@@ -356,6 +460,13 @@ namespace OpenGL
             GL.glTexCoord2f(t, t); GL.glVertex3f(s, s, 0);
             GL.glTexCoord2f(0, t); GL.glVertex3f(-s, s, 0);
             GL.glEnd();
+
+            if (scroll)
+            {
+                GL.glMatrixMode(GL.GL_TEXTURE);
+                GL.glPopMatrix();
+                GL.glMatrixMode(GL.GL_MODELVIEW);
+            }
             DisableTexture();
         }
 
@@ -377,14 +488,101 @@ namespace OpenGL
             GL.glColor3f(0.92f, 0.92f, 0.92f);
             GLU.gluCylinder(obj, 0.20, 0.14, 0.85, 16, 3);
             GL.glTranslatef(0, 0, 0.85f);
+
+            // the lamp - glows stronger at night
+            GL.glDisable(GL.GL_LIGHTING);
+            float glow = 0.35f + 0.65f * (1.0f - daylight);
+            GL.glColor3f(glow, glow * 0.9f, 0.30f * glow);
+            GLU.gluSphere(obj, 0.13, 12, 12);
+            GL.glEnable(GL.GL_LIGHTING);
+
             GL.glColor3f(0.80f, 0.12f, 0.12f);
             GLU.gluDisk(obj, 0, 0.22, 16, 2);
             GLU.gluCylinder(obj, 0.22, 0.0, 0.28, 16, 2);
             GL.glPopMatrix();
         }
 
+        // soft, additive light beam turning around the lighthouse
+        void DrawBeam()
+        {
+            float a = 0.05f + 0.22f * (1.0f - daylight);
+            GL.glDisable(GL.GL_LIGHTING);
+            GL.glDisable(GL.GL_TEXTURE_2D);
+            GL.glEnable(GL.GL_BLEND);
+            GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE);   // additive glow
+            GL.glDepthMask((byte)GL.GL_FALSE);
+            GL.glColor4f(1.0f, 0.95f, 0.6f, a);
+            for (int k = 0; k < 2; k++)
+            {
+                GL.glPushMatrix();
+                GL.glTranslatef(0, 0, 1.78f);             // lamp height
+                GL.glRotatef(beamAngle + k * 180.0f, 0, 0, 1);
+                GL.glRotatef(95.0f, 0, 1, 0);             // outward and a touch down
+                GLU.gluCylinder(obj, 0.04, 0.8, 7.0, 18, 1);
+                GL.glPopMatrix();
+            }
+            GL.glDepthMask((byte)GL.GL_TRUE);
+            GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
+            GL.glDisable(GL.GL_BLEND);
+            GL.glEnable(GL.GL_LIGHTING);
+        }
+
+        void DrawStars()
+        {
+            float a = (0.55f - daylight) * 2.2f;
+            if (a <= 0) return;
+            if (a > 1) a = 1;
+            GL.glDisable(GL.GL_LIGHTING);
+            GL.glDisable(GL.GL_TEXTURE_2D);
+            GL.glDisable(GL.GL_DEPTH_TEST);
+            GL.glEnable(GL.GL_BLEND);
+            GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA);
+            // each star is a tiny quad so it is easy to see and twinkles a bit
+            for (int i = 0; i < STAR_COUNT; i++)
+            {
+                float tw = 0.6f + 0.4f * (float)Math.Sin(beamAngle * 0.1f + i);
+                GL.glColor4f(1, 1, 0.9f, a * tw);
+                float sx = starX[i], sy = starY[i], sz = starZ[i];
+                float d = 0.12f;
+                GL.glBegin(GL.GL_QUADS);
+                GL.glVertex3f(sx - d, sy, sz - d);
+                GL.glVertex3f(sx + d, sy, sz - d);
+                GL.glVertex3f(sx + d, sy, sz + d);
+                GL.glVertex3f(sx - d, sy, sz + d);
+                GL.glEnd();
+            }
+            GL.glDisable(GL.GL_BLEND);
+            GL.glEnable(GL.GL_DEPTH_TEST);
+            GL.glEnable(GL.GL_LIGHTING);
+        }
+
+        void DrawBirds()
+        {
+            GL.glDisable(GL.GL_LIGHTING);
+            GL.glDisable(GL.GL_TEXTURE_2D);
+            GL.glColor3f(0.13f, 0.13f, 0.16f);
+            float flap = 0.45f * (float)Math.Sin(wingFlap * 2.0f);
+            float[,] off = { { 0, 0 }, { -0.7f, 0.55f }, { -0.7f, -0.55f } };
+            GL.glLineWidth(2.0f);
+            for (int i = 0; i < 3; i++)
+            {
+                GL.glPushMatrix();
+                GL.glTranslatef(birdCross + off[i, 0], 5.0f + off[i, 1], 6.5f);
+                GL.glBegin(GL.GL_LINE_STRIP);
+                GL.glVertex3f(-0.35f, 0, -flap);
+                GL.glVertex3f(0, 0, 0.12f);
+                GL.glVertex3f(0.35f, 0, -flap);
+                GL.glEnd();
+                GL.glPopMatrix();
+            }
+            GL.glLineWidth(1.0f);
+            GL.glEnable(GL.GL_LIGHTING);
+        }
+
         void DrawSun()
         {
+            // below the horizon at night - nothing to show
+            if (pos[2] < -0.5f) return;
             GL.glDisable(GL.GL_LIGHTING);
             GL.glColor3f(1.0f, 0.94f, 0.40f);
             GL.glPushMatrix();
@@ -407,6 +605,58 @@ namespace OpenGL
         }
 
         //--------------------------------------------------------------------
+        //  sun position, sky colour and light colour for the current frame
+        //--------------------------------------------------------------------
+        void UpdateDayNight()
+        {
+            if (dayNight)
+            {
+                float rad = sunAngle * (float)Math.PI / 180.0f;
+                float elev = (float)Math.Sin(rad);
+                pos[0] = 9.0f * (float)Math.Cos(rad);
+                pos[1] = -2.5f;
+                pos[2] = 9.0f * elev;
+                pos[3] = 1.0f;
+
+                daylight = elev * 1.25f + 0.15f;
+                if (daylight < 0) daylight = 0;
+                if (daylight > 1) daylight = 1;
+
+                // warm glow while the sun is near the horizon
+                float dusk = 1.0f - Math.Abs(elev) / 0.35f;
+                if (dusk < 0 || elev < -0.25f) dusk = 0;
+
+                skyR = Lerp(0.03f, 0.53f, daylight);
+                skyG = Lerp(0.04f, 0.70f, daylight);
+                skyB = Lerp(0.10f, 0.92f, daylight);
+                skyR = Lerp(skyR, 0.97f, dusk * 0.6f);
+                skyG = Lerp(skyG, 0.52f, dusk * 0.6f);
+                skyB = Lerp(skyB, 0.26f, dusk * 0.6f);
+
+                float[] amb = { Lerp(0.06f, 0.32f, daylight), Lerp(0.06f, 0.32f, daylight),
+                                Lerp(0.11f, 0.32f, daylight), 1 };
+                float[] dif = { Lerp(0.12f, 1.00f, daylight) + dusk * 0.25f,
+                                Lerp(0.12f, 0.96f, daylight),
+                                Lerp(0.22f, 0.88f, daylight) - dusk * 0.12f, 1 };
+                GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, amb);
+                GL.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, dif);
+            }
+            else
+            {
+                pos[0] = ScrollValue[10];
+                pos[1] = ScrollValue[11];
+                pos[2] = ScrollValue[12];
+                pos[3] = 1.0f;
+                daylight = 1.0f;
+                skyR = 0.53f; skyG = 0.70f; skyB = 0.92f;
+                float[] amb = { 0.35f, 0.35f, 0.35f, 1 };
+                float[] dif = { 0.95f, 0.95f, 0.88f, 1 };
+                GL.glLightfv(GL.GL_LIGHT0, GL.GL_AMBIENT, amb);
+                GL.glLightfv(GL.GL_LIGHT0, GL.GL_DIFFUSE, dif);
+            }
+        }
+
+        //--------------------------------------------------------------------
         //  per frame
         //--------------------------------------------------------------------
         public void AdvanceAnimation()
@@ -417,6 +667,20 @@ namespace OpenGL
                 flightAngle += 0.7f * flightSpeed;  // plane is slow
                 if (flightAngle > 360.0f) flightAngle -= 360.0f;
                 if (propAngle < -360.0f) propAngle += 360.0f;
+
+                beamAngle += 2.4f * flightSpeed;
+                if (beamAngle > 360.0f) beamAngle -= 360.0f;
+                boatPhase += 0.035f * flightSpeed;
+                wingFlap += 0.25f * flightSpeed;
+                birdCross += 0.03f * flightSpeed;
+                if (birdCross > 13.0f) birdCross = -13.0f;
+                waterScroll += 0.0016f * flightSpeed;
+
+                if (dayNight)
+                {
+                    sunAngle += 0.30f * flightSpeed;
+                    if (sunAngle > 360.0f) sunAngle -= 360.0f;
+                }
             }
             Draw();
         }
@@ -426,11 +690,8 @@ namespace OpenGL
             if (m_uint_DC == 0 || m_uint_RC == 0)
                 return;
 
-            pos[0] = ScrollValue[10];
-            pos[1] = ScrollValue[11];
-            pos[2] = ScrollValue[12];
-            pos[3] = 1.0f;
-
+            UpdateDayNight();
+            GL.glClearColor(skyR, skyG, skyB, 1.0f);
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT | GL.GL_STENCIL_BUFFER_BIT);
             GL.glLoadIdentity();
 
@@ -469,6 +730,7 @@ namespace OpenGL
             // light/sun position (placed in the rotated world)
             GL.glLightfv(GL.GL_LIGHT0, GL.GL_POSITION, pos);
 
+            if (dayNight) DrawStars();
             if (showAxes) DrawAxes();
 
             // ---------------- water + reflection ----------------
@@ -487,13 +749,13 @@ namespace OpenGL
                 GL.glColorMask((byte)GL.GL_TRUE, (byte)GL.GL_TRUE, (byte)GL.GL_TRUE, (byte)GL.GL_TRUE);
                 GL.glEnable(GL.GL_DEPTH_TEST);
 
-                // draw the mirrored plane only inside the sea area
+                // draw the mirrored movers only inside the sea area
                 GL.glStencilFunc(GL.GL_EQUAL, 1, 0xFFFFFFFF);
                 GL.glStencilOp(GL.GL_KEEP, GL.GL_KEEP, GL.GL_KEEP);
                 GL.glPushMatrix();
                 GL.glScalef(1, 1, -1);          // mirror through the water plane
                 GL.glEnable(GL.GL_NORMALIZE);
-                DrawAirplaneInScene(false);
+                DrawMovers(false);
                 GL.glDisable(GL.GL_NORMALIZE);
                 GL.glPopMatrix();
                 GL.glDisable(GL.GL_STENCIL_TEST);
@@ -526,14 +788,17 @@ namespace OpenGL
                 GL.glPushMatrix();
                 MakeShadowMatrix(ground);
                 GL.glMultMatrixf(cubeXform);
-                DrawAirplaneInScene(true);
+                DrawMovers(true);
                 GL.glPopMatrix();
                 GL.glDisable(GL.GL_BLEND);
                 GL.glEnable(GL.GL_LIGHTING);
             }
 
-            // ---------------- the real plane ----------------
-            DrawAirplaneInScene(false);
+            // ---------------- the real movers ----------------
+            DrawMovers(false);
+
+            if (showBirds) DrawBirds();
+            if (showBeam) DrawBeam();
 
             // ---------------- the sun ----------------
             if (showSun) DrawSun();
@@ -611,7 +876,6 @@ namespace OpenGL
             GL.glDepthFunc(GL.GL_LEQUAL);
             GL.glHint(GL.GL_PERSPECTIVE_CORRECTION_Hint, GL.GL_NICEST);
 
-            // lighting
             float[] amb = { 0.35f, 0.35f, 0.35f, 1.0f };
             float[] dif = { 0.95f, 0.95f, 0.88f, 1.0f };
             float[] spe = { 1.0f, 1.0f, 1.0f, 1.0f };

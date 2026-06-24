@@ -59,6 +59,10 @@ namespace myOpenGL
             this.checkBoxTex = new System.Windows.Forms.CheckBox();
             this.checkBoxAxes = new System.Windows.Forms.CheckBox();
             this.checkBoxSun = new System.Windows.Forms.CheckBox();
+            this.checkBoxDayNight = new System.Windows.Forms.CheckBox();
+            this.checkBoxBeam = new System.Windows.Forms.CheckBox();
+            this.checkBoxBoat = new System.Windows.Forms.CheckBox();
+            this.checkBoxBirds = new System.Windows.Forms.CheckBox();
             this.lblHelp = new System.Windows.Forms.Label();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.groupBoxCam.SuspendLayout();
@@ -439,9 +443,13 @@ namespace myOpenGL
             this.groupBoxShow.Controls.Add(this.checkBoxTex);
             this.groupBoxShow.Controls.Add(this.checkBoxAxes);
             this.groupBoxShow.Controls.Add(this.checkBoxSun);
+            this.groupBoxShow.Controls.Add(this.checkBoxDayNight);
+            this.groupBoxShow.Controls.Add(this.checkBoxBeam);
+            this.groupBoxShow.Controls.Add(this.checkBoxBoat);
+            this.groupBoxShow.Controls.Add(this.checkBoxBirds);
             this.groupBoxShow.Location = new System.Drawing.Point(580, 525);
             this.groupBoxShow.Name = "groupBoxShow";
-            this.groupBoxShow.Size = new System.Drawing.Size(350, 90);
+            this.groupBoxShow.Size = new System.Drawing.Size(365, 95);
             this.groupBoxShow.TabIndex = 4;
             this.groupBoxShow.TabStop = false;
             this.groupBoxShow.Text = "Show";
@@ -464,7 +472,7 @@ namespace myOpenGL
             this.checkBoxReflect.AutoSize = true;
             this.checkBoxReflect.Checked = true;
             this.checkBoxReflect.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxReflect.Location = new System.Drawing.Point(130, 22);
+            this.checkBoxReflect.Location = new System.Drawing.Point(108, 22);
             this.checkBoxReflect.Name = "checkBoxReflect";
             this.checkBoxReflect.Size = new System.Drawing.Size(76, 17);
             this.checkBoxReflect.TabIndex = 1;
@@ -477,7 +485,7 @@ namespace myOpenGL
             this.checkBoxShadow.AutoSize = true;
             this.checkBoxShadow.Checked = true;
             this.checkBoxShadow.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxShadow.Location = new System.Drawing.Point(245, 22);
+            this.checkBoxShadow.Location = new System.Drawing.Point(205, 22);
             this.checkBoxShadow.Name = "checkBoxShadow";
             this.checkBoxShadow.Size = new System.Drawing.Size(66, 17);
             this.checkBoxShadow.TabIndex = 2;
@@ -490,7 +498,7 @@ namespace myOpenGL
             this.checkBoxTex.AutoSize = true;
             this.checkBoxTex.Checked = true;
             this.checkBoxTex.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxTex.Location = new System.Drawing.Point(12, 50);
+            this.checkBoxTex.Location = new System.Drawing.Point(290, 22);
             this.checkBoxTex.Name = "checkBoxTex";
             this.checkBoxTex.Size = new System.Drawing.Size(71, 17);
             this.checkBoxTex.TabIndex = 3;
@@ -501,7 +509,7 @@ namespace myOpenGL
             // checkBoxAxes
             //
             this.checkBoxAxes.AutoSize = true;
-            this.checkBoxAxes.Location = new System.Drawing.Point(130, 50);
+            this.checkBoxAxes.Location = new System.Drawing.Point(12, 46);
             this.checkBoxAxes.Name = "checkBoxAxes";
             this.checkBoxAxes.Size = new System.Drawing.Size(49, 17);
             this.checkBoxAxes.TabIndex = 4;
@@ -514,13 +522,65 @@ namespace myOpenGL
             this.checkBoxSun.AutoSize = true;
             this.checkBoxSun.Checked = true;
             this.checkBoxSun.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBoxSun.Location = new System.Drawing.Point(245, 50);
+            this.checkBoxSun.Location = new System.Drawing.Point(108, 46);
             this.checkBoxSun.Name = "checkBoxSun";
             this.checkBoxSun.Size = new System.Drawing.Size(44, 17);
             this.checkBoxSun.TabIndex = 5;
             this.checkBoxSun.Text = "Sun";
             this.checkBoxSun.UseVisualStyleBackColor = true;
             this.checkBoxSun.CheckedChanged += new System.EventHandler(this.checkBoxToggle_CheckedChanged);
+            //
+            // checkBoxDayNight
+            //
+            this.checkBoxDayNight.AutoSize = true;
+            this.checkBoxDayNight.Checked = true;
+            this.checkBoxDayNight.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxDayNight.Location = new System.Drawing.Point(205, 46);
+            this.checkBoxDayNight.Name = "checkBoxDayNight";
+            this.checkBoxDayNight.Size = new System.Drawing.Size(80, 17);
+            this.checkBoxDayNight.TabIndex = 6;
+            this.checkBoxDayNight.Text = "Day / Night";
+            this.checkBoxDayNight.UseVisualStyleBackColor = true;
+            this.checkBoxDayNight.CheckedChanged += new System.EventHandler(this.checkBoxToggle_CheckedChanged);
+            //
+            // checkBoxBeam
+            //
+            this.checkBoxBeam.AutoSize = true;
+            this.checkBoxBeam.Checked = true;
+            this.checkBoxBeam.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxBeam.Location = new System.Drawing.Point(290, 46);
+            this.checkBoxBeam.Name = "checkBoxBeam";
+            this.checkBoxBeam.Size = new System.Drawing.Size(53, 17);
+            this.checkBoxBeam.TabIndex = 7;
+            this.checkBoxBeam.Text = "Beam";
+            this.checkBoxBeam.UseVisualStyleBackColor = true;
+            this.checkBoxBeam.CheckedChanged += new System.EventHandler(this.checkBoxToggle_CheckedChanged);
+            //
+            // checkBoxBoat
+            //
+            this.checkBoxBoat.AutoSize = true;
+            this.checkBoxBoat.Checked = true;
+            this.checkBoxBoat.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxBoat.Location = new System.Drawing.Point(12, 70);
+            this.checkBoxBoat.Name = "checkBoxBoat";
+            this.checkBoxBoat.Size = new System.Drawing.Size(48, 17);
+            this.checkBoxBoat.TabIndex = 8;
+            this.checkBoxBoat.Text = "Boat";
+            this.checkBoxBoat.UseVisualStyleBackColor = true;
+            this.checkBoxBoat.CheckedChanged += new System.EventHandler(this.checkBoxToggle_CheckedChanged);
+            //
+            // checkBoxBirds
+            //
+            this.checkBoxBirds.AutoSize = true;
+            this.checkBoxBirds.Checked = true;
+            this.checkBoxBirds.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxBirds.Location = new System.Drawing.Point(108, 70);
+            this.checkBoxBirds.Name = "checkBoxBirds";
+            this.checkBoxBirds.Size = new System.Drawing.Size(50, 17);
+            this.checkBoxBirds.TabIndex = 9;
+            this.checkBoxBirds.Text = "Birds";
+            this.checkBoxBirds.UseVisualStyleBackColor = true;
+            this.checkBoxBirds.CheckedChanged += new System.EventHandler(this.checkBoxToggle_CheckedChanged);
             //
             // lblHelp
             //
@@ -542,7 +602,7 @@ namespace myOpenGL
             //
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(945, 650);
+            this.ClientSize = new System.Drawing.Size(955, 650);
             this.Controls.Add(this.lblHelp);
             this.Controls.Add(this.groupBoxShow);
             this.Controls.Add(this.groupBoxProj);
@@ -610,6 +670,10 @@ namespace myOpenGL
         private System.Windows.Forms.CheckBox checkBoxTex;
         private System.Windows.Forms.CheckBox checkBoxAxes;
         private System.Windows.Forms.CheckBox checkBoxSun;
+        private System.Windows.Forms.CheckBox checkBoxDayNight;
+        private System.Windows.Forms.CheckBox checkBoxBeam;
+        private System.Windows.Forms.CheckBox checkBoxBoat;
+        private System.Windows.Forms.CheckBox checkBoxBirds;
         private System.Windows.Forms.Label lblHelp;
         private System.Windows.Forms.Timer timer1;
     }
