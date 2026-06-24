@@ -108,6 +108,7 @@ namespace myOpenGL
             cGL.showBeam = checkBoxBeam.Checked;
             cGL.showBoat = checkBoxBoat.Checked;
             cGL.showBirds = checkBoxBirds.Checked;
+            cGL.showKeeper = checkBoxKeeper.Checked;
             cGL.Draw();
         }
 

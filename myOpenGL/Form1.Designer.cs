@@ -63,6 +63,7 @@ namespace myOpenGL
             this.checkBoxBeam = new System.Windows.Forms.CheckBox();
             this.checkBoxBoat = new System.Windows.Forms.CheckBox();
             this.checkBoxBirds = new System.Windows.Forms.CheckBox();
+            this.checkBoxKeeper = new System.Windows.Forms.CheckBox();
             this.lblHelp = new System.Windows.Forms.Label();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.groupBoxCam.SuspendLayout();
@@ -447,6 +448,7 @@ namespace myOpenGL
             this.groupBoxShow.Controls.Add(this.checkBoxBeam);
             this.groupBoxShow.Controls.Add(this.checkBoxBoat);
             this.groupBoxShow.Controls.Add(this.checkBoxBirds);
+            this.groupBoxShow.Controls.Add(this.checkBoxKeeper);
             this.groupBoxShow.Location = new System.Drawing.Point(580, 525);
             this.groupBoxShow.Name = "groupBoxShow";
             this.groupBoxShow.Size = new System.Drawing.Size(365, 95);
@@ -582,6 +584,19 @@ namespace myOpenGL
             this.checkBoxBirds.UseVisualStyleBackColor = true;
             this.checkBoxBirds.CheckedChanged += new System.EventHandler(this.checkBoxToggle_CheckedChanged);
             //
+            // checkBoxKeeper
+            //
+            this.checkBoxKeeper.AutoSize = true;
+            this.checkBoxKeeper.Checked = true;
+            this.checkBoxKeeper.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBoxKeeper.Location = new System.Drawing.Point(205, 70);
+            this.checkBoxKeeper.Name = "checkBoxKeeper";
+            this.checkBoxKeeper.Size = new System.Drawing.Size(62, 17);
+            this.checkBoxKeeper.TabIndex = 10;
+            this.checkBoxKeeper.Text = "Keeper";
+            this.checkBoxKeeper.UseVisualStyleBackColor = true;
+            this.checkBoxKeeper.CheckedChanged += new System.EventHandler(this.checkBoxToggle_CheckedChanged);
+            //
             // lblHelp
             //
             this.lblHelp.AutoSize = true;
@@ -674,6 +689,7 @@ namespace myOpenGL
         private System.Windows.Forms.CheckBox checkBoxBeam;
         private System.Windows.Forms.CheckBox checkBoxBoat;
         private System.Windows.Forms.CheckBox checkBoxBirds;
+        private System.Windows.Forms.CheckBox checkBoxKeeper;
         private System.Windows.Forms.Label lblHelp;
         private System.Windows.Forms.Timer timer1;
     }

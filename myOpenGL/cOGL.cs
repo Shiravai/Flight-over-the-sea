@@ -71,6 +71,7 @@ namespace OpenGL
         public bool showBeam = true;   // turning lighthouse beam
         public bool showBoat = true;   // sailing boat on the water
         public bool showBirds = true;  // flock crossing the sky
+        public bool showKeeper = true; // keeper walking around the lighthouse
 
         public bool isPerspective = true;
         public float fovy = 45.0f;       // perspective zoom
@@ -83,6 +84,9 @@ namespace OpenGL
         float sunAngle = 60.0f;          // position along the day arc (degrees)
         float beamAngle = 0.0f;          // lighthouse beam rotation
         float boatPhase = 0.0f;          // boat rocking
+        float boatTravel = 0.0f;         // boat sailing around the island
+        float keeperAngle = 0.0f;        // keeper position around the lighthouse
+        float keeperWalk = 0.0f;         // keeper leg / arm swing
         float birdCross = -13.0f;        // birds crossing the sky
         float wingFlap = 0.0f;
         float waterScroll = 0.0f;        // moving water texture
@@ -404,16 +408,20 @@ namespace OpenGL
             GL.glEnd();
         }
 
+        // the boat sails on a wide circle around the island
         void DrawBoatInScene(bool asShadow)
         {
+            float a = boatTravel * (float)Math.PI / 180.0f;
+            float R = 7.0f;
+            float bx = R * (float)Math.Cos(a);
+            float by = R * (float)Math.Sin(a);
             float bob = 0.06f * (float)Math.Sin(boatPhase);
-            float roll = 4.5f * (float)Math.Sin(boatPhase * 0.8f);
-            float drift = 1.4f * (float)Math.Sin(boatPhase * 0.25f);
+            float roll = 5.0f * (float)Math.Sin(boatPhase * 0.8f);
 
             GL.glPushMatrix();
-            GL.glTranslatef(-5.5f, 3.5f + drift, bob);
-            GL.glRotatef(35.0f, 0, 0, 1);   // heading
-            GL.glRotatef(roll, 1, 0, 0);    // rocking on the waves
+            GL.glTranslatef(bx, by, bob);
+            GL.glRotatef(boatTravel + 90.0f, 0, 0, 1);  // sail along the path
+            GL.glRotatef(roll, 1, 0, 0);                // rock on the waves
             GL.glScalef(0.85f, 0.85f, 0.85f);
             DrawBoat(asShadow);
             GL.glPopMatrix();
@@ -424,6 +432,67 @@ namespace OpenGL
         {
             DrawAirplaneInScene(asShadow);
             if (showBoat) DrawBoatInScene(asShadow);
+        }
+
+        //--------------------------------------------------------------------
+        //  the lighthouse keeper - a little walking man (hierarchical model).
+        //  he faces +X, his feet are at z = 0.
+        //--------------------------------------------------------------------
+        // one swinging limb, pivoting at (x,y,zHip) and hanging down
+        void DrawLimb(float x, float y, float zHip, float swing, float ht, float len)
+        {
+            GL.glPushMatrix();
+            GL.glTranslatef(x, y, zHip);
+            GL.glRotatef(swing, 0, 1, 0);   // swing forward / back
+            DrawBox(0, 0, -len * 0.5f, ht, ht, len * 0.5f);
+            GL.glPopMatrix();
+        }
+
+        void DrawKeeper()
+        {
+            GL.glEnable(GL.GL_LIGHTING);
+            float sw = 28.0f * (float)Math.Sin(keeperWalk);
+
+            // legs
+            GL.glColor3f(0.20f, 0.20f, 0.32f);
+            DrawLimb(0.0f, 0.07f, 0.18f, sw, 0.05f, 0.18f);
+            DrawLimb(0.0f, -0.07f, 0.18f, -sw, 0.05f, 0.18f);
+
+            // body
+            GL.glColor3f(0.15f, 0.35f, 0.65f);
+            DrawBox(0.0f, 0.0f, 0.30f, 0.09f, 0.13f, 0.12f);
+
+            // arms (swing opposite to the legs)
+            DrawLimb(0.0f, 0.15f, 0.40f, -sw, 0.04f, 0.15f);
+            DrawLimb(0.0f, -0.15f, 0.40f, sw, 0.04f, 0.15f);
+
+            // head
+            GL.glColor3f(0.85f, 0.68f, 0.55f);
+            GL.glPushMatrix();
+            GL.glTranslatef(0, 0, 0.50f);
+            GLU.gluSphere(obj, 0.07, 12, 12);
+            // a red keeper's cap
+            GL.glColor3f(0.75f, 0.12f, 0.12f);
+            GL.glTranslatef(0, 0, 0.03f);
+            GLU.gluCylinder(obj, 0.075, 0.0, 0.08, 12, 2);
+            GL.glPopMatrix();
+        }
+
+        // place the keeper on a path that circles the lighthouse on the island
+        void DrawKeeperInScene()
+        {
+            float r = 1.35f;
+            float a = keeperAngle * (float)Math.PI / 180.0f;
+            float kx = r * (float)Math.Cos(a);
+            float ky = r * (float)Math.Sin(a);
+            float kz = 0.9f * (2.2f - r) / 1.5f;   // sit on the island slope
+
+            GL.glPushMatrix();
+            GL.glTranslatef(kx, ky, kz);
+            GL.glRotatef(keeperAngle + 90.0f, 0, 0, 1); // face the walking direction
+            GL.glScalef(0.85f, 0.85f, 0.85f);
+            DrawKeeper();
+            GL.glPopMatrix();
         }
 
         //--------------------------------------------------------------------
@@ -675,6 +744,11 @@ namespace OpenGL
                 birdCross += 0.03f * flightSpeed;
                 if (birdCross > 13.0f) birdCross = -13.0f;
                 waterScroll += 0.0016f * flightSpeed;
+                boatTravel += 0.25f * flightSpeed;
+                if (boatTravel > 360.0f) boatTravel -= 360.0f;
+                keeperAngle += 0.5f * flightSpeed;
+                if (keeperAngle > 360.0f) keeperAngle -= 360.0f;
+                keeperWalk += 0.35f * flightSpeed;
 
                 if (dayNight)
                 {
@@ -796,6 +870,7 @@ namespace OpenGL
 
             // ---------------- the real movers ----------------
             DrawMovers(false);
+            if (showKeeper) DrawKeeperInScene();
 
             if (showBirds) DrawBirds();
             if (showBeam) DrawBeam();
